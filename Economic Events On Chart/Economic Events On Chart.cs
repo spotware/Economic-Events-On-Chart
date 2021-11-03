@@ -16,6 +16,8 @@ namespace cAlgo
     {
         private Color _colorHighImpact, _colorMediumImpact, _colorLowImpact, _colorOthers;
 
+        private TextBlock _textBlock;
+
         [Parameter("Data URI", DefaultValue = "https://nfs.faireconomy.media/ff_calendar_thisweek.xml", Group = "General")]
         public string DataUri { get; set; }
 
@@ -70,9 +72,49 @@ namespace cAlgo
         [Parameter("Thickness", DefaultValue = 1, Group = "Others")]
         public int ThicknessOthers { get; set; }
 
+        [Parameter("Show", DefaultValue = true, Group = "Text Block")]
+        public bool ShowTextBlock { get; set; }
+
+        [Parameter("Background Color", DefaultValue = "#969696", Group = "Text Block")]
+        public string TextBlockBackgroundColor { get; set; }
+
+        [Parameter("Color", DefaultValue = "White", Group = "Text Block")]
+        public string TextBlockColor { get; set; }
+
+        [Parameter("Horizontal Alignment", DefaultValue = HorizontalAlignment.Center, Group = "Text Block")]
+        public HorizontalAlignment TextBlockHorizontalAlignment { get; set; }
+
+        [Parameter("Vertical Alignment", DefaultValue = VerticalAlignment.Bottom, Group = "Text Block")]
+        public VerticalAlignment TextBlockVerticalAlignment { get; set; }
+
+        [Parameter("Text Alignment", DefaultValue = TextAlignment.Center, Group = "Text Block")]
+        public TextAlignment TextBlockTextAlignment { get; set; }
+
+        [Parameter("Font Weight", DefaultValue = FontWeight.Bold, Group = "Text Block")]
+        public FontWeight TextBlockFontWeight { get; set; }
+
         protected override void Initialize()
         {
             RemoveEventLines();
+
+            if (ShowTextBlock)
+            {
+                _textBlock = new TextBlock
+                {
+                    IsVisible = false,
+                    HorizontalAlignment = TextBlockHorizontalAlignment,
+                    VerticalAlignment = TextBlockVerticalAlignment,
+                    BackgroundColor = GetColor(TextBlockBackgroundColor),
+                    ForegroundColor = GetColor(TextBlockColor),
+                    TextAlignment = TextBlockTextAlignment,
+                    FontWeight = TextBlockFontWeight,
+                    Padding = 5
+                };
+
+                Chart.AddControl(_textBlock);
+
+                Chart.ObjectHoverChanged += Chart_ObjectHoverChanged;
+            }
 
             _colorHighImpact = GetColor(ColorHighImpact);
             _colorMediumImpact = GetColor(ColorMediumImpact);
@@ -82,6 +124,20 @@ namespace cAlgo
             var events = GetNewsEvents();
 
             DisplayEvents(events);
+        }
+
+        private void Chart_ObjectHoverChanged(ChartObjectHoverChangedEventArgs obj)
+        {
+            if (!obj.IsObjectHovered || obj.ChartObject == null || string.IsNullOrWhiteSpace(obj.ChartObject.Name) || !obj.ChartObject.Name.EndsWith("Event", StringComparison.OrdinalIgnoreCase))
+            {
+                _textBlock.IsVisible = false;
+
+                return;
+            }
+
+            _textBlock.Text = string.Format("{0} | {1}", obj.ChartObject.Name.Replace(" | Event", string.Empty), obj.ChartObject.Comment);
+
+            _textBlock.IsVisible = true;
         }
 
         public override void Calculate(int index)
