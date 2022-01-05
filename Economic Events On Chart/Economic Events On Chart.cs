@@ -24,6 +24,9 @@ namespace cAlgo
         [Parameter("Only Symbol Events", DefaultValue = true, Group = "General")]
         public bool OnlySymbolEvents { get; set; }
 
+        [Parameter("Show Past Events", DefaultValue = true, Group = "General")]
+        public bool ShowPastEvents { get; set; }
+
         [Parameter("Show", DefaultValue = true, Group = "High Impact")]
         public bool ShowHighImpact { get; set; }
 
@@ -186,7 +189,8 @@ namespace cAlgo
                     || (newsEvent.Impact == NewsEventImpact.Medium && !ShowMediumImpact)
                     || (newsEvent.Impact == NewsEventImpact.Low && !ShowLowImpact)
                     || ((newsEvent.Impact == NewsEventImpact.None || newsEvent.Impact == NewsEventImpact.Holiday) && !ShowOthers)
-                    || (OnlySymbolEvents && !IsEventRelatedToSymbol(newsEvent.Currency))) continue;
+                    || (OnlySymbolEvents && !IsEventRelatedToSymbol(newsEvent.Currency))
+                    || (!ShowPastEvents && newsEvent.Time < Server.TimeInUtc)) continue;
 
                 var lineSettings = GetLineSettings(newsEvent.Impact);
 
